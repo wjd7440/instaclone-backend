@@ -16,19 +16,20 @@ const typeDefs = gql`
 
   type Query {
     movies: [Movie]
-    movie: Movie
+    movie(id: Int!): Movie
   }
 
   type Mutation {
     createMovie(title: String!, year: Int!, genre: String): Movie
-    deleteMovie(title: String!): Boolean
+    deleteMovie(id: Int!): Movie
+    updateMovie(id: Int!, year: Int!): Movie
   }
 `;
 
 const resolvers = {
   Query: {
     movies: () => client.movie.findMany(),
-    movie: () => ({ title: "Hello", year: 2021 }),
+    movie: (_, { id }) => client.movie.findUnique({ where: { id } }),
   },
 
   Mutation: {
@@ -40,10 +41,9 @@ const resolvers = {
           genre,
         },
       }),
-    deleteMovie: (_, { title }) => {
-      console.log(args);
-      return true;
-    },
+    deleteMovie: (_, { id }) => client.movie.delete({ where: { id } }),
+    updateMovie: (_, { id, year }) =>
+      client.movie.update({ where: { id }, data: { year } }),
   },
 };
 
