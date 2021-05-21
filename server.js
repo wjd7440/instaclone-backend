@@ -1,57 +1,27 @@
-import pkg from "@prisma/client";
-import { ApolloServer, gql } from "apollo-server";
+require("dotenv").config();
+import express from "express";
+import logger from "morgan";
+import { ApolloServer } from "apollo-server-express";
+import { typeDefs, resolvers } from "./schema.js";
+import { getUser, protectResolver } from "./users/users.utils.js";
 
-const { PrismaClient } = pkg;
-const client = new PrismaClient();
+const PORT = process.env.PORT;
 
-const typeDefs = gql`
-  type Movie {
-    id: Int
-    title: String
-    year: Int
-    genre: String
-    createdAt: String
-    updatedAt: String
-  }
-
-  type Query {
-    movies: [Movie]
-    movie(id: Int!): Movie
-  }
-
-  type Mutation {
-    createMovie(title: String!, year: Int!, genre: String): Movie
-    deleteMovie(id: Int!): Movie
-    updateMovie(id: Int!, year: Int!): Movie
-  }
-`;
-
-const resolvers = {
-  Query: {
-    movies: () => client.movie.findMany(),
-    movie: (_, { id }) => client.movie.findUnique({ where: { id } }),
-  },
-
-  Mutation: {
-    createMovie: (_, { title, year, genre }) =>
-      client.movie.create({
-        data: {
-          title,
-          year,
-          genre,
-        },
-      }),
-    deleteMovie: (_, { id }) => client.movie.delete({ where: { id } }),
-    updateMovie: (_, { id, year }) =>
-      client.movie.update({ where: { id }, data: { year } }),
-  },
-};
-
-const server = new ApolloServer({
-  typeDefs,
+const apollo = new ApolloServer({
   resolvers,
+  typeDefs,
+  context: async ({ req }) => {
+    return {
+      loggedInUser: await getUser(req.headers.token),
+      protectResolver,
+    };
+  },
 });
 
-server
-  .listen()
-  .then(() => console.log("Server is running on http://localhost:4000"));
+const app = express();
+// app.use(logger("tiny"));
+app.use(express.static("uploads"));
+apollo.applyMiddleware({ app });
+app.listen({ port: PORT }, () => {
+  console.log(`🚀Server is running on http://localhost:${PORT} ✅`);
+});
