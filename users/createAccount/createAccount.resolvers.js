@@ -1,5 +1,5 @@
-import client from "../../client";
 import bcrypt from "bcrypt";
+import client from "../../client";
 
 export default {
   Mutation: {
@@ -8,7 +8,6 @@ export default {
       { firstName, lastName, username, email, password }
     ) => {
       try {
-        // 1. username, email 중복 체크
         const existingUser = await client.user.findFirst({
           where: {
             OR: [
@@ -22,11 +21,10 @@ export default {
           },
         });
         if (existingUser) {
-          throw new Error("This username.password is aleady taken.");
+          throw new Error("This username/password is already taken.");
         }
-        // 2. 중복이 안된다면 비밀번호 hash
         const uglyPassword = await bcrypt.hash(password, 10);
-        return client.user.create({
+        await client.user.create({
           data: {
             username,
             email,
@@ -35,9 +33,14 @@ export default {
             password: uglyPassword,
           },
         });
-        // 3. 저장하고 user return
+        return {
+          ok: true,
+        };
       } catch (e) {
-        return e;
+        return {
+          ok: false,
+          error: "Cant create account.",
+        };
       }
     },
   },
