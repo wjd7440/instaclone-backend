@@ -5,6 +5,8 @@ import jwt from "jsonwebtoken";
 export default {
   Mutation: {
     login: async (_, { username, password }) => {
+      console.log("hi");
+      console.log(username, password);
       // 1. 유저 아이디를 찾고
       const user = await client.user.findFirst({ where: { username } });
       if (!user) {
