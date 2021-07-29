@@ -8,6 +8,7 @@ export default {
       { firstName, lastName, username, email, password }
     ) => {
       try {
+        console.log(firstName, lastName, username, email, password);
         const existingUser = await client.user.findFirst({
           where: {
             OR: [
@@ -37,6 +38,7 @@ export default {
           ok: true,
         };
       } catch (e) {
+        console.log(firstName, lastName, username, email, password);
         return {
           ok: false,
           error: "Cant create account.",
